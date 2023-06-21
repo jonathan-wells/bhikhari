@@ -11,12 +11,19 @@ declare -A GENOMES=(
     ["GCA_903798175.1_fDreNAz1.1_genomic.fna"]="NA"   # Nadia
 )
 
-# Extracting BHIKHARI-1
 bedtools slop \
-    -b 50000 \
+    -b 100000 \
     -i ../../../data/beds/reference_bik1_full_length_intact.bed \
     -g ../../../data/genomes/GCF_000002035.6_GRCz11.genome > tmp.bed
 
+bedtools slop \
+    -b 100000 \
+    -i ../../../data/beds/reference_bik2_full_length_intact.bed \
+    -g ../../../data/genomes/GCF_000002035.6_GRCz11.genome >> tmp.bed
+
+bedtools sort -i tmp.bed > tmp2.bed; mv tmp2.bed tmp.bed
+
+# Extracting BHIKHARI-1/2
 for genome in ${!GENOMES[@]}; do
     strain=${GENOMES[$genome]}
     echo "extracting bik1 loci from Reference-${strain} alignment"
@@ -25,28 +32,10 @@ for genome in ${!GENOMES[@]}; do
         -b \
         -h \
         -q 60 \
+        -e 'rlen>2000' \
         ../../../data/polymorphism/Ref_${strain}_alignment.bam \
         $(sed 's/\t/:/' tmp.bed | sed 's/\t/-/' | tr '\n' ' ' | sed 's/$/\n/') |
-    samtools sort > ../../../data/polymorphism/${strain}_bik1_full_length_intact.bam
-done
-
-# Extracting BHIKHARI-2
-bedtools slop \
-    -b 50000 \
-    -i ../../../data/beds/reference_bik2_full_length_intact.bed \
-    -g ../../../data/genomes/GCF_000002035.6_GRCz11.genome > tmp.bed
-
-for genome in ${!GENOMES[@]}; do
-    strain=${GENOMES[$genome]}
-    echo "extracting bik2 loci from Reference-${strain} alignment"
-    
-    samtools view \
-        -b \
-        -h \
-        -q 60 \
-        ../../../data/polymorphism/Ref_${strain}_alignment.bam \
-        $(sed 's/\t/:/' tmp.bed | sed 's/\t/-/' | tr '\n' ' ' | sed 's/$/\n/') |
-    samtools sort > ../../../data/polymorphism/${strain}_bik2_full_length_intact.bam
+    samtools sort > ../../../data/polymorphism/${strain}_bik12_full_length_intact.bam
 done
 
 rm tmp.bed
